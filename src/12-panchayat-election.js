@@ -65,16 +65,114 @@
  */
 export function createElection(candidates) {
   // Your code here
+   let votes = {};
+  let registeredVoters = new Set();
+  let votedVoters = new Set();
+
+  // Initialize vote counts
+  for (let c of candidates) {
+    votes[c.id] = 0;
+  }
+
+  function registerVoter(voter) {
+     if (
+    !voter ||
+    typeof voter !== "object" ||
+    !voter.id ||
+    !voter.name ||
+    typeof voter.age !== "number" ||
+    voter.age < 18 ||
+    registeredVoters.has(voter.id)
+  ) {
+    return false;
+  }
+
+  registeredVoters.add(voter.id);
+  return true;
+  }
+
+  function castVote(voterId, candidateId, onSuccess, onError) {
+    if (!registeredVoters.has(voterId)) {
+      return onError("Voter not registered");
+    }
+
+    if (!votes.hasOwnProperty(candidateId)) {
+      return onError("Candidate not found");
+    }
+
+    if (votedVoters.has(voterId)) {
+      return onError("Already voted");
+    }
+
+    votedVoters.add(voterId);
+    votes[candidateId]++;
+
+    return onSuccess({ voterId, candidateId });
+  }
+
+  function getResults(sortFn) {
+    let results = candidates.map(c => ({
+      id: c.id,
+      name: c.name,
+      party: c.party,
+      votes: votes[c.id]
+    }));
+
+    if (sortFn) {
+      return results.sort(sortFn);
+    }
+
+    return results.sort((a, b) => b.votes - a.votes);
+  }
+
+  function getWinner() {
+    let results = getResults();
+
+    if (results.length === 0 || results[0].votes === 0) {
+      return null;
+    }
+
+    return results[0];
+  }
+
+  return {
+    registerVoter,
+    castVote,
+    getResults,
+    getWinner
+  };
 }
+
 
 export function createVoteValidator(rules) {
   // Your code here
+  return function(voter){
+  if(!voter || typeof voter !== "object") {
+    return {valid : false , reason : "invalid votes"}
+  }
+  if(voter.age < rules.minAge){
+    return {valid : false , reason : "underage"}
+  } 
+
+  if(!rules.requiredFields.every(field => field in voter)){
+    return {valid : false, reason : "Missing required field"}
+  }
+
+  return {valid : true , reason : "null"}
+  
+  }   
 }
 
 export function countVotesInRegions(regionTree) {
   // Your code here
+  if(!regionTree) return 0;
+  return regionTree.subRegions.reduce( (sum,region) =>  sum + countVotesInRegions(region),regionTree.votes)
 }
 
 export function tallyPure(currentTally, candidateId) {
   // Your code here
+  return{
+    ...currentTally,
+    [candidateId] : (currentTally[candidateId] || 0) + 1
+  }
 }

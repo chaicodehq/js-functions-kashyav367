@@ -44,14 +44,78 @@
  *   const pricer = createTicketPricer(200);
  *   pricer("gold", true)  // => 200 * 1.5 * 1.3 = 390
  */
-export function createDialogueWriter(genre) {
+export function createDialogueWriter(genre){
   // Your code here
+  const templates = {
+    action: (hero, villain) =>
+      `${hero} says: 'Tujhe toh main dekh lunga, ${villain}!'`,
+
+    romance: (hero, villain) =>
+      `${hero} whispers: '${villain}, tum mere liye sab kuch ho'`,
+
+    comedy: (hero, villain) =>
+      `${hero} laughs: '${villain} bhai, kya kar rahe ho yaar!'`,
+
+    drama: (hero, villain) =>
+      `${hero} cries: '${villain}, tune mera sab kuch cheen liya!'`,
+  };
+
+  // FIX: validate genre here
+  if (!(genre in templates)) {
+    return null;
+  }
+
+  // return specialized function
+  return (hero, villain) => {
+    if (
+      typeof hero !== "string" ||
+      hero.trim() === "" ||
+      typeof villain !== "string" ||
+      villain.trim() === ""
+    ) {
+      return "...";
+    }
+
+    return templates[genre](hero, villain);
+  };
 }
 
-export function createTicketPricer(basePrice) {
+ export function createTicketPricer(basePrice) {
   // Your code here
+  if(typeof basePrice !== "number" || basePrice <= 0) return null;
+
+  const seatMultipliers = {
+    silver : 1, 
+    gold : 1.5, 
+    platinum :2
+  }
+
+  const price  = (seatType, isWeekend = false) => {
+  if(!(seatType in seatMultipliers)) return null;
+
+  let finalPrice = basePrice * seatMultipliers[seatType];
+  if(isWeekend === true) finalPrice *= 1.3;
+  finalPrice = Math.round(finalPrice);
+
+  return finalPrice;
+  };
+  return price;
 }
 
 export function createRatingCalculator(weights) {
   // Your code here
+  if(typeof weights !== "object" || weights === null) return null;
+
+  return(scores) => {
+    if(typeof scores !== "object" || scores === null) return null;
+
+    let total =0;
+
+    for(let key in weights){
+      if(key in scores){
+        total += weights[key] * scores[key];
+      }
+    }
+    return Number(total.toFixed(2));
+}
 }
